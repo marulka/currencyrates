@@ -1,0 +1,2 @@
+include ':app', ':lib-http-request'
+rootProject.name='CurrencyRates'
