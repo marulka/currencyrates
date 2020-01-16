@@ -37,7 +37,7 @@ import butterknife.ButterKnife;
 /* package-private */ class CurrenciesListAdapter extends ArrayAdapter<CurrencyModel> {
 
     private final LayoutInflater inflater;
-    private SparseArray<View> listItems;
+    private SparseArray<ListItem> listItems;
 
     private List<CurrencyModel> currencyRates;
 
@@ -51,7 +51,7 @@ import butterknife.ButterKnife;
     /* package-private */ CurrenciesListAdapter(@NonNull Activity context, @NonNull List<CurrencyModel> rates) {
         super(context, 0, rates);
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.listItems = new SparseArray<View>();
+        this.listItems = new SparseArray<>();
     }
 
     /**
@@ -84,19 +84,20 @@ import butterknife.ButterKnife;
 
         final ListItem item;
         final CurrencyModel currencyModel = getItem(position);
-        if (convertView == null) {
-            convertView = this.inflater.inflate(R.layout.list_item, parent, false);
-            final String currencyCode = (currencyModel != null) ?
-                    currencyModel.getCurrencyCode() : null;
-            item = new ListItem(convertView, v -> onClickCallback(currencyCode),
-                    (v, hasFocus) -> onClickCallback(currencyCode));
-            convertView.setTag(item);
-        } else {
+        if (convertView != null) {
             item = (ListItem) convertView.getTag();
+        } else {
+            convertView = this.inflater.inflate(R.layout.list_item, parent, false);
+            item = new ListItem(convertView, v -> CurrenciesListAdapter.this.onClickCallback(position),
+                    (v, hasFocus) -> {
+                        if (hasFocus) {
+                            CurrenciesListAdapter.this.onClickCallback(position);
+                        }
+                    });
+            this.listItems.put(position, item);
         }
-
         item.setValues(currencyModel);
-        this.listItems.put(position, convertView);
+        convertView.setTag(item);
         return convertView;
     }
 
@@ -130,19 +131,22 @@ import butterknife.ButterKnife;
     public void addAll(@NonNull Collection<? extends CurrencyModel> items) {
         if (items instanceof List) {
             this.currencyRates = (List<CurrencyModel>) items;
-            this.listItems = new SparseArray<>(items.size());
         }
         super.addAll(items);
     }
 
     /**
-     * @param currencyCode {@see String} -
+     * Changes the base currency according to the clicked list item.
+     *
+     * @param position {@see int} - The item position in the list.
      */
-    private void onClickCallback(final String currencyCode) {
+    private void onClickCallback(final int position) {
 
         final Context context = getContext();
-        if (context instanceof ICurrencyRatesAppManager) {
+        final CurrencyModel item = getItemByPosition(position);
+        if (context instanceof ICurrencyRatesAppManager && item != null) {
             final ICurrencyRatesAppManager serviceManager = (ICurrencyRatesAppManager) context;
+            final String currencyCode = item.getCurrencyCode();
             serviceManager.changeBaseCurrency(currencyCode);
         }
     }
@@ -169,10 +173,23 @@ import butterknife.ButterKnife;
     }
 
     /**
+     * Gets the model of an item with specific position in the list.
+     *
+     * @param position {@see int} - The item position in the list.
+     * @return {@see CurrencyModel} - The item model at specific position.
+     */
+    private CurrencyModel getItemByPosition(int position) {
+
+        final ListItem item = (this.listItems != null && this.listItems.size() != 0) ?
+                this.listItems.get(position) : null;
+        return (item != null) ? item.getValues() : null;
+    }
+
+    /**
      * Creates new instance of {@see ListHeader} and adds local editor action listener
      * implementation.
      *
-     * @param headerView {@see View} - The list header view.
+     * @param headerView          {@see View} - The list header view.
      * @param focusChangeListener
      * @return {@see ListHeader} - The new list header instance.
      */
@@ -192,7 +209,8 @@ import butterknife.ButterKnife;
 
         /**
          * The main constructor of this class.
-         *  @param view                 {@see View} - The parent view of this view wrapper.
+         *
+         * @param view                 {@see View} - The parent view of this view wrapper.
          * @param editorActionListener
          * @param focusChangeListener
          */
