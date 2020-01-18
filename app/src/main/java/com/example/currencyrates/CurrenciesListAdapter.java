@@ -8,6 +8,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -31,12 +33,13 @@ import butterknife.ButterKnife;
  * order ButterKnife to maintain better the memory allocation.
  *
  * @author Nikola Georgiev
- * @version 1.0
+ * @version 1.1
  * @since 1.0.0
  */
 /* package-private */ class CurrenciesListAdapter extends ArrayAdapter<CurrencyModel> {
 
     private final LayoutInflater inflater;
+    private final Animation animSlideUp;
     private SparseArray<ListItem> listItems;
 
     private List<CurrencyModel> currencyRates;
@@ -52,6 +55,7 @@ import butterknife.ButterKnife;
         super(context, 0, rates);
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.listItems = new SparseArray<>();
+        this.animSlideUp = AnimationUtils.loadAnimation(getContext(), R.anim.slideup);
     }
 
     /**
@@ -88,10 +92,11 @@ import butterknife.ButterKnife;
             item = (ListItem) convertView.getTag();
         } else {
             convertView = this.inflater.inflate(R.layout.list_item, parent, false);
-            item = new ListItem(convertView, v -> CurrenciesListAdapter.this.onClickCallback(position),
+            item = new ListItem(convertView,
+                    v -> CurrenciesListAdapter.this.onClickCallback(position, parent),
                     (v, hasFocus) -> {
                         if (hasFocus) {
-                            CurrenciesListAdapter.this.onClickCallback(position);
+                            CurrenciesListAdapter.this.onClickCallback(position, parent);
                         }
                     });
             this.listItems.put(position, item);
@@ -139,14 +144,21 @@ import butterknife.ButterKnife;
      * Changes the base currency according to the clicked list item.
      *
      * @param position {@see int} - The item position in the list.
+     * @param parent {@see ViewGroup} - Instance to the clicked item parent view.
      */
-    private void onClickCallback(final int position) {
+    private void onClickCallback(final int position, final ViewGroup parent) {
 
         final Context context = getContext();
         final CurrencyModel item = getItemByPosition(position);
         if (context instanceof ICurrencyRatesAppManager && item != null) {
             final ICurrencyRatesAppManager serviceManager = (ICurrencyRatesAppManager) context;
             final String currencyCode = item.getCurrencyCode();
+            /* Start animation to slide up the list item */
+            if (parent != null) {
+                parent.setAnimation(this.animSlideUp);
+                parent.startAnimation(this.animSlideUp);
+            }
+            /* Call the activity to change the base currency */
             serviceManager.changeBaseCurrency(currencyCode);
         }
     }
