@@ -40,7 +40,6 @@ import org.apache.commons.lang3.Validate;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedList;

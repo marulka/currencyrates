@@ -14,6 +14,13 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Utility class that helps extracting common currency logics.
+ *
+ * @author Nikola Georgiev
+ * @version 1.0
+ * @since 1.0.0
+ */
 /* package-private */ final class CurrencyUtils {
 
     /* package-private */  static final String TAG = CurrencyUtils.class.getSimpleName();
@@ -55,7 +62,7 @@ import java.util.Map;
      *
      * @param data {@see String} - The raw data as string, it suppose to be JSON object as string.
      * @return {@see JSONObject} - The JSON string raw data as {@see JSONObject}. In case an
-     * error occurres during the parsing process, it will return Null Pointer.
+     * error occurs during the parsing process, it will return Null Pointer.
      */
     /* package-private */
     static JSONObject parseJSONData(final String data) {

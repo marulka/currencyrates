@@ -19,7 +19,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.List;
 
@@ -144,7 +143,7 @@ import butterknife.ButterKnife;
      * Changes the base currency according to the clicked list item.
      *
      * @param position {@see int} - The item position in the list.
-     * @param parent {@see ViewGroup} - Instance to the clicked item parent view.
+     * @param parent   {@see ViewGroup} - Instance to the clicked item parent view.
      */
     private void onClickCallback(final int position, final ViewGroup parent) {
 
@@ -202,7 +201,8 @@ import butterknife.ButterKnife;
      * implementation.
      *
      * @param headerView          {@see View} - The list header view.
-     * @param focusChangeListener
+     * @param focusChangeListener {@see OnFocusChangeListener} - On focus of the {@see EditText} view
+     *                            changed listener.
      * @return {@see ListHeader} - The new list header instance.
      */
     /* package-private */ ListHeader createListHeader(final View headerView,
@@ -223,8 +223,10 @@ import butterknife.ButterKnife;
          * The main constructor of this class.
          *
          * @param view                 {@see View} - The parent view of this view wrapper.
-         * @param editorActionListener
-         * @param focusChangeListener
+         * @param editorActionListener {@see OnEditorActionListener} - On soft keyboard action
+         *                             listener implementation.
+         * @param focusChangeListener  {@see OnFocusChangeListener} - On focus of the {@see EditText} view
+         *                             changed listener.
          */
         /* package-private */ ListHeader(final View view,
                                          final TextView.OnEditorActionListener editorActionListener,
@@ -271,8 +273,9 @@ import butterknife.ButterKnife;
          * Overloaded constructor of this class.
          *
          * @param view          {@see View} - The parent view of this view wrapper.
-         * @param clickListener
-         * @param focusListener
+         * @param clickListener {@see OnClickListener} - Implementation of on view clicked listener.
+         * @param focusListener {@see OnFocusChangeListener} - On focus of the {@see EditText} view
+         *                      changed listener implementation.
          */
         /* package-private */ ListItem(final View view, final View.OnClickListener clickListener,
                                        final View.OnFocusChangeListener focusListener) {
@@ -281,6 +284,12 @@ import butterknife.ButterKnife;
             this.onFocusChangeListener = focusListener;
         }
 
+        /**
+         * Use this method in order to transform and set all the model values to the corresponding
+         * GUI views.
+         *
+         * @param currencyModel {@see CurrencyModel} - The currency value holder object.
+         */
         /* package-private */ void setValues(final CurrencyModel currencyModel) {
             if (currencyModel != null) {
                 setIcon(currencyModel.getCountryFlagIconUri());
@@ -291,10 +300,20 @@ import butterknife.ButterKnife;
             }
         }
 
+        /**
+         * Getter of the views holder model.
+         *
+         * @return {@see CurrencyModel} - Returns instance of the views holder model.
+         */
         /* package-private */ CurrencyModel getValues() {
             return this.currencyModel;
         }
 
+        /**
+         * Private setter of the icon {@see ImageView} value.
+         *
+         * @param iconUri {@see Uri} - The icon image file uri path.
+         */
         private void setIcon(final Uri iconUri) {
             if (this.icon != null) {
                 this.icon.setImageURI(iconUri);
@@ -302,6 +321,11 @@ import butterknife.ButterKnife;
             }
         }
 
+        /**
+         * Private setter of the currency code {@see TextView} value.
+         *
+         * @param fieldCode {@see String} - The currency 3-letter code as string.
+         */
         private void setFieldCode(final String fieldCode) {
             if (this.fieldCode != null) {
                 this.fieldCode.setText(fieldCode);
@@ -309,6 +333,11 @@ import butterknife.ButterKnife;
             }
         }
 
+        /**
+         * Private setter of the currency name {@see TextView} value.
+         *
+         * @param fieldName {@see String} - The currency name.
+         */
         private void setFieldName(final String fieldName) {
             if (this.fieldName != null) {
                 this.fieldName.setText(fieldName);
@@ -316,6 +345,12 @@ import butterknife.ButterKnife;
             }
         }
 
+        /**
+         * Private setter of the currency rate {@see EditText} view value. This value will be
+         * formatted according to the current locale specifics.
+         *
+         * @param fieldRate {@see BigDecimal} - The currency rate value as BigDecimal.
+         */
         private void setFieldRate(final BigDecimal fieldRate) {
             if (this.fieldRate != null) {
                 this.fieldRate.setText(CurrencyUtils.formatBigDecimalAsString(fieldRate));
