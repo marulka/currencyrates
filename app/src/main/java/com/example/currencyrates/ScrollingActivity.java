@@ -1,5 +1,6 @@
 package com.example.currencyrates;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -28,6 +30,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.github.kevinsawicki.http.HttpRequest;
@@ -51,7 +54,7 @@ import butterknife.ButterKnife;
  * The main activity for this application.
  *
  * @author Nikola Georgiev
- * @version 1.0
+ * @version 1.1
  * @since 1.0.0
  */
 public class ScrollingActivity extends AppCompatActivity implements ICurrencyRatesAppManager {
@@ -269,7 +272,7 @@ public class ScrollingActivity extends AppCompatActivity implements ICurrencyRat
         if (StringUtils.isNotEmpty(currencyCode)) {
             super.unbindService(this.serviceConnection);
             this.baseCurrency = currencyCode;
-            this.multiplier = DEFAULT_QUANTITY;
+            this.multiplier = getDefaultCurrencyMultiplier(currencyCode);
             startService();
             this.listView.smoothScrollToPosition(0);
             replaceListHeader();
@@ -289,17 +292,30 @@ public class ScrollingActivity extends AppCompatActivity implements ICurrencyRat
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-        if (v == null || StringUtils.isEmpty(v.getText())) return false;
-        try {
-            final BigDecimal input = new BigDecimal(v.getText().toString());
-            if (BigDecimal.ZERO.compareTo(input) < 0) {
-                multiplier = input;
-                return true;
+        if (v != null && StringUtils.isNotEmpty(v.getText())) {
+            try {
+                final BigDecimal input = new BigDecimal(v.getText().toString());
+                if (BigDecimal.ZERO.compareTo(input) < 0) {
+                    multiplier = input;
+                    /* Hide the software keyboard after multiplier is set. */
+                    final Object inputService = super.getSystemService(Activity.INPUT_METHOD_SERVICE);
+                    if (inputService instanceof InputMethodManager) {
+                        final InputMethodManager imm = (InputMethodManager) inputService;
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    return true;
+                }
+            } catch (final NumberFormatException nfe) {
+                Log.w(TAG, "The multiplier input is wrong type.", nfe);
             }
-        } catch (NumberFormatException e) {
-            e.printStackTrace(); // TODO
         }
-        return false;
+        if (v instanceof EditText) {
+            final EditText editText = (EditText) v;
+            editText.requestFocus();
+            editText.setText(CurrencyUtils.formatBigDecimalAsString(BigDecimal.ZERO));
+            editText.selectAll();
+        }
+        return true;
     }
 
     /**
@@ -465,7 +481,7 @@ public class ScrollingActivity extends AppCompatActivity implements ICurrencyRat
      * @return {@see List} - Returns {@see ArrayList} of {@see CurrenciesListAdapter.CurrencyModel}.
      * In case te map is empty or has null pointer, this method will return an empty list.
      */
-    private List<CurrencyModel> parseCurrencyRates(Map<String, BigDecimal> dataMap) {
+    private List<CurrencyModel> parseCurrencyRates(final Map<String, BigDecimal> dataMap) {
 
         final List<CurrencyModel> currencies = new ArrayList<>();
         if (dataMap != null && !dataMap.isEmpty()) {
@@ -573,6 +589,29 @@ public class ScrollingActivity extends AppCompatActivity implements ICurrencyRat
         final int nameId = res.getIdentifier(currencyCode, "string", super.getPackageName());
         final String currencyName = (nameId > 0) ? res.getString(nameId) : null;
         return StringUtils.isEmpty(currencyName) ? currencyCode : currencyName;
+    }
+
+    /**
+     * Gets currency multiplier based on the 3 letter currency code. All the currency names are
+     * suppose to be added into the dimen.xml resources of this package and the resource item
+     * names should be the currency code.
+     *
+     * @param currencyCode {@see String} - A 3 letter currency code that will used to get the
+     *                                  default currency multiplier for.
+     * @return {@see BigDecimal} - The default currency multiplier based on the 3 letter currency code.
+     * @since 1.0.3
+     */
+    private BigDecimal getDefaultCurrencyMultiplier(final String currencyCode) {
+
+        final Resources res = super.getResources();
+        final int resIdentifier = res.getIdentifier(currencyCode, "dimen", super.getPackageName());
+        try {
+            final float defaultValue = ResourcesCompat.getFloat(super.getResources(), resIdentifier);
+            return new BigDecimal(defaultValue);
+        } catch (NumberFormatException | Resources.NotFoundException e) {
+            Log.w(TAG, "Cannot find the default multiplier for: " + currencyCode, e);
+        }
+        return BigDecimal.ZERO;
     }
 
     /**
