@@ -318,7 +318,7 @@ import butterknife.ButterKnife;
 
         private void setFieldRate(final BigDecimal fieldRate) {
             if (this.fieldRate != null) {
-                this.fieldRate.setText(new DecimalFormat("#,##0.00").format(fieldRate)); // TODO
+                this.fieldRate.setText(CurrencyUtils.formatBigDecimalAsString(fieldRate));
                 this.fieldRate.setOnEditorActionListener(this.onEditorActionListener);
                 this.fieldRate.setOnFocusChangeListener(this.onFocusChangeListener);
             }

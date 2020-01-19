@@ -6,8 +6,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 /* package-private */ final class CurrencyUtils {
@@ -23,7 +27,8 @@ import java.util.Map;
      * keys. It will return an empty map, in case the {@param data} is not a JSON string or
      * doesn't have the required data.
      */
-    /* package-private */ static Map<String, BigDecimal> convertData(final String data) {
+    /* package-private */
+    static Map<String, BigDecimal> convertData(final String data) {
 
         final JSONObject jsonData = parseJSONData(data);
         final Map<String, BigDecimal> ratesMap = new HashMap<>();
@@ -52,12 +57,41 @@ import java.util.Map;
      * @return {@see JSONObject} - The JSON string raw data as {@see JSONObject}. In case an
      * error occurres during the parsing process, it will return Null Pointer.
      */
-    /* package-private */ static JSONObject parseJSONData(final String data) {
+    /* package-private */
+    static JSONObject parseJSONData(final String data) {
 
         try {
             return new JSONObject(data);
         } catch (JSONException je) {
             Log.e(TAG, "An error occurred, while trying to parse a string to JSON object.", je);
+        }
+        return null;
+    }
+
+    /**
+     * This method formats a parsed {@see BigDecimal} value to a string according to the current
+     * device locale.
+     *
+     * @param number {@see BigDecimal} - The decimal number that should be formatted.
+     * @return {@see String} - The formatted decimal number as string.
+     */
+    /* package-private */
+    static String formatBigDecimalAsString(final BigDecimal number) {
+
+        if (number == null) return null;
+
+        final NumberFormat nf = NumberFormat.getNumberInstance(Locale.getDefault());
+        if (nf instanceof DecimalFormat) {
+            final DecimalFormat formatter = (DecimalFormat) nf;
+            formatter.setDecimalSeparatorAlwaysShown(true);
+            formatter.setMinimumFractionDigits(2);
+            formatter.setMaximumFractionDigits(2);
+            formatter.setRoundingMode(RoundingMode.HALF_UP);
+            try {
+                return formatter.format(number);
+            } catch (NumberFormatException nfe) {
+                Log.w(TAG, "The number input is wrong type.", nfe);
+            }
         }
         return null;
     }

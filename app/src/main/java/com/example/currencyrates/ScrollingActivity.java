@@ -1,5 +1,6 @@
 package com.example.currencyrates;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -38,6 +40,7 @@ import org.apache.commons.lang3.Validate;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -289,17 +292,30 @@ public class ScrollingActivity extends AppCompatActivity implements ICurrencyRat
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 
-        if (v == null || StringUtils.isEmpty(v.getText())) return false;
-        try {
-            final BigDecimal input = new BigDecimal(v.getText().toString());
-            if (BigDecimal.ZERO.compareTo(input) < 0) {
-                multiplier = input;
-                return true;
+        if (v != null && StringUtils.isEmpty(v.getText())) {
+            try {
+                final BigDecimal input = new BigDecimal(v.getText().toString());
+                if (BigDecimal.ZERO.compareTo(input) < 0) {
+                    multiplier = input;
+                    /* Hide the software keyboard after multiplier is set. */
+                    final Object inputService = super.getSystemService(Activity.INPUT_METHOD_SERVICE);
+                    if (inputService instanceof InputMethodManager) {
+                        final InputMethodManager imm = (InputMethodManager) inputService;
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    return true;
+                }
+            } catch (final NumberFormatException nfe) {
+                Log.w(TAG, "The multiplier input is wrong type.", nfe);
             }
-        } catch (NumberFormatException e) {
-            e.printStackTrace(); // TODO
         }
-        return false;
+        if (v instanceof EditText) {
+            final EditText editText = (EditText) v;
+            editText.requestFocus();
+            editText.setText(CurrencyUtils.formatBigDecimalAsString(BigDecimal.ZERO));
+            editText.selectAll();
+        }
+        return true;
     }
 
     /**
